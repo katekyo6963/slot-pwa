@@ -57,7 +57,7 @@ button {
 }
 
 .cell.recommend {
-  border:3px solid #ff4d4f;
+  border:3px solid red;
 }
 
 .panel {
@@ -65,10 +65,6 @@ button {
   padding:10px;
   border-radius:8px;
   margin-bottom:10px;
-}
-
-.star {
-  color:#f7c948;
 }
 </style>
 </head>
@@ -94,18 +90,11 @@ button {
 <div class="grid" id="board"></div>
 
 <div class="panel">
-  🎯 第一候補：<span id="mainTarget">---</span><br><br>
-  並び：<span id="nScore"></span><br>
-  末尾：<span id="mScore"></span><br>
-  角　：<span id="kScore"></span>
-</div>
-
-<div class="panel">
-  ▶ 推奨確認順<br>
-  <div id="recommendList">---</div>
+  🎯 並び候補 赤枠表示中
 </div>
 
 <script>
+
 const upper = [665,666,667,668,669,670,671,672,673,674,675,676];
 const lower = [688,687,686,685,684,683,682,681,680,679,678,677];
 
@@ -116,15 +105,12 @@ const board = document.getElementById("board");
   const div = document.createElement("div");
   div.className = "cell";
   div.textContent = num;
-
-  // 台ごとに最後のタップ時間を持たせる
   div.dataset.lastTap = 0;
 
   div.onclick = () => {
     const currentTime = new Date().getTime();
     const tapLength = currentTime - div.dataset.lastTap;
 
-    // 400ms以内ならダブルタップ
     if (tapLength < 400 && tapLength > 0) {
       div.classList.remove("active");
       div.classList.toggle("used");
@@ -135,18 +121,49 @@ const board = document.getElementById("board");
     }
 
     div.dataset.lastTap = currentTime;
+    checkNarabi();
   };
 
   board.appendChild(div);
 });
 
-// リセット
+function checkNarabi() {
+  const cells = Array.from(document.querySelectorAll(".cell"));
+  const activeIndexes = cells
+    .map((c, i) => c.classList.contains("active") ? i : -1)
+    .filter(i => i !== -1);
+
+  cells.forEach(c => c.classList.remove("recommend"));
+
+  if (activeIndexes.length === 0) return;
+
+  activeIndexes.forEach(index => {
+    const candidates = [
+      [index-1, index, index+1],
+      [index, index+1, index+2],
+      [index-2, index-1, index]
+    ];
+
+    candidates.forEach(group => {
+      if (group.every(i => i >= 0 && i < cells.length)) {
+        group.forEach(i => {
+          if (!cells[i].classList.contains("active") &&
+              !cells[i].classList.contains("used")) {
+            cells[i].classList.add("recommend");
+          }
+        });
+      }
+    });
+  });
+}
+
 function resetBoard(){
   document.querySelectorAll(".cell").forEach(c=>{
     c.classList.remove("active","used","recommend");
     c.dataset.lastTap = 0;
   });
 }
+
 </script>
 
 </body>
