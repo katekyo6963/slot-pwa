@@ -111,33 +111,40 @@ const lower = [688,687,686,685,684,683,682,681,680,679,678,677];
 
 const board = document.getElementById("board");
 
+// 盤面生成
 [...upper, ...lower].forEach(num => {
   const div = document.createElement("div");
-  div.className="cell";
-  div.textContent=num;
-  let lastTap = 0;
+  div.className = "cell";
+  div.textContent = num;
 
-div.onclick = ()=>{
-  const currentTime = new Date().getTime();
-  const tapLength = currentTime - lastTap;
-  lastTap = currentTime;
+  // 台ごとに最後のタップ時間を持たせる
+  div.dataset.lastTap = 0;
 
-  // ダブルタップ判定
-  if (tapLength < 300 && tapLength > 0) {
-    div.classList.remove("active");
-    div.classList.toggle("used");
-  } else {
-    if (!div.classList.contains("used")) {
-      div.classList.toggle("active");
+  div.onclick = () => {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - div.dataset.lastTap;
+
+    // 400ms以内ならダブルタップ
+    if (tapLength < 400 && tapLength > 0) {
+      div.classList.remove("active");
+      div.classList.toggle("used");
+    } else {
+      if (!div.classList.contains("used")) {
+        div.classList.toggle("active");
+      }
     }
-  }
-};
+
+    div.dataset.lastTap = currentTime;
+  };
+
   board.appendChild(div);
 });
 
+// リセット
 function resetBoard(){
   document.querySelectorAll(".cell").forEach(c=>{
     c.classList.remove("active","used","recommend");
+    c.dataset.lastTap = 0;
   });
 }
 </script>
