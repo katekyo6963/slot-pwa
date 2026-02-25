@@ -3,108 +3,91 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>かぐやローテツール</title>
-
+<title>かぐや 665-688</title>
 <style>
-body {
-  background:#111;
-  color:white;
+body{
+  background:#000;
+  color:#fff;
   font-family:sans-serif;
-  margin:0;
-  padding:10px;
   text-align:center;
 }
 
-h1 {
-  font-size:18px;
-  margin-bottom:5px;
-}
+h1{ margin:20px 0; }
 
-.controls {
-  margin-bottom:10px;
-}
-
-button {
-  padding:5px 10px;
-  font-size:14px;
-  border-radius:6px;
-  border:none;
-}
-
-.grid {
+#board{
   display:grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap:6px;
-  margin-bottom:15px;
+  grid-template-columns:repeat(12, 1fr);
+  gap:8px;
+  max-width:900px;
+  margin:20px auto;
 }
 
-.cell {
-  background:#1e1e1e;
+.cell{
   border:2px solid #444;
-  border-radius:8px;
+  border-radius:10px;
   padding:12px 0;
-  font-weight:bold;
-  font-size:14px;
+  font-size:18px;
+  user-select:none;
 }
 
-.cell.active {
-  background:#f7c948;
-  color:black;
+.cell.active{
+  background:#f4c542;
+  color:#000;
 }
 
-.cell.used {
+.cell.used{
   background:#555;
+  color:#999;
 }
 
-.cell.recommend {
+.cell.recommend{
   border:3px solid red;
 }
 
-.panel {
-  background:#222;
-  padding:10px;
+.panel{
+  background:#111;
+  padding:15px;
+  margin:20px auto;
+  max-width:600px;
+  border-radius:12px;
+}
+button{
+  padding:6px 12px;
   border-radius:8px;
-  margin-bottom:10px;
+  border:none;
 }
 </style>
 </head>
-
 <body>
 
-<h1>かぐや 665–688</h1>
+<h1>かぐや 665-688</h1>
 
-<div class="controls">
-  Day:
-  <select id="day">
-    <option>1</option>
-    <option>2</option>
-    <option>3</option>
-    <option>4</option>
-    <option>5</option>
-    <option>6</option>
-    <option>7</option>
-  </select>
-  <button onclick="resetBoard()">開催リセット</button>
+<div>
+Day:
+<select>
+<option>1</option>
+</select>
+<button onclick="resetBoard()">開催リセット</button>
 </div>
 
-<div class="grid" id="board"></div>
+<div id="board"></div>
 
 <div class="panel">
-  🎯 並び候補 赤枠表示中
+🎯 並び候補 赤枠表示中
 </div>
 
 <script>
-
 const upper = [665,666,667,668,669,670,671,672,673,674,675,676];
 const lower = [688,687,686,685,684,683,682,681,680,679,678,677];
 
 const board = document.getElementById("board");
 
-// 盤面生成
+// ===== 盤面生成 =====
 [...upper, ...lower].forEach(num => {
   const div = document.createElement("div");
   div.className = "cell";
   div.textContent = num;
+
   div.dataset.lastTap = 0;
 
   div.onclick = () => {
@@ -121,134 +104,78 @@ const board = document.getElementById("board");
     }
 
     div.dataset.lastTap = currentTime;
-    checkNarabi();
-    analyzePatterns();
+
+    evaluateBoard();
   };
 
   board.appendChild(div);
 });
 
-function checkNarabi() {
-  const cells = Array.from(document.querySelectorAll(".cell"));
-  const activeIndexes = cells
-    .map((c, i) => c.classList.contains("active") ? i : -1)
-    .filter(i => i !== -1);
+// ===== ユーティリティ =====
+function getActiveCells(){
+  return Array.from(document.querySelectorAll(".cell.active"));
+}
 
-  cells.forEach(c => c.classList.remove("recommend"));
+function getNum(div){
+  return Number(div.textContent);
+}
 
-  if (activeIndexes.length === 0) return;
+function isHorizontalPair(a, b){
+  const aNum = getNum(a);
+  const bNum = getNum(b);
 
-  activeIndexes.forEach(index => {
-    const candidates = [
-      [index-1, index, index+1],
-      [index, index+1, index+2],
-      [index-2, index-1, index]
-    ];
+  if (upper.includes(aNum) && upper.includes(bNum) && Math.abs(aNum - bNum) === 1) return true;
+  if (lower.includes(aNum) && lower.includes(bNum) && Math.abs(aNum - bNum) === 1) return true;
 
-    candidates.forEach(group => {
-      if (group.every(i => i >= 0 && i < cells.length)) {
-        group.forEach(i => {
-          if (!cells[i].classList.contains("active") &&
-              !cells[i].classList.contains("used")) {
-            cells[i].classList.add("recommend");
-          }
-        });
+  return false;
+}
+
+function clearRecommend(){
+  document.querySelectorAll(".cell").forEach(c=>{
+    c.classList.remove("recommend");
+  });
+}
+
+function recommendHorizontalAround(pairNums){
+  clearRecommend();
+
+  pairNums.forEach(num=>{
+    const left = num - 1;
+    const right = num + 1;
+
+    document.querySelectorAll(".cell").forEach(c=>{
+      const n = getNum(c);
+      if ((n === left || n === right) && !c.classList.contains("active")){
+        c.classList.add("recommend");
       }
     });
   });
 }
 
+// ===== 評価ロジック =====
+function evaluateBoard(){
+  const actives = getActiveCells();
+  clearRecommend();
+
+  if (actives.length !== 3) return;
+
+  for (let i=0;i<actives.length;i++){
+    for (let j=i+1;j<actives.length;j++){
+      if (isHorizontalPair(actives[i], actives[j])){
+        const pairNums = [getNum(actives[i]), getNum(actives[j])];
+        recommendHorizontalAround(pairNums);
+        return;
+      }
+    }
+  }
+}
+
+// ===== リセット =====
 function resetBoard(){
   document.querySelectorAll(".cell").forEach(c=>{
     c.classList.remove("active","used","recommend");
     c.dataset.lastTap = 0;
   });
-}
-// ===== パターン分析 =====
-
-function analyzePatterns() {
-
-  const active = [...document.querySelectorAll(".cell.active")]
-                  .map(c => parseInt(c.textContent));
-
-  if (active.length === 0) {
-    updateResult("—");
-    return;
-  }
-
-  const all = [...upper, ...lower];
-
-  let count_4 = 0;
-  let count_3p1 = 0;
-  let count_2x2 = 0;
-  let count_tail = 0;
-  let count_corner = 0;
-
-  // 4台並び
-  for (let i = 0; i < all.length - 3; i++) {
-    const group = [all[i], all[i+1], all[i+2], all[i+3]];
-    if (active.every(n => group.includes(n))) {
-      count_4++;
-    }
-  }
-
-  // 3台並び+1
-  for (let i = 0; i < all.length - 2; i++) {
-    const group = [all[i], all[i+1], all[i+2]];
-    if (active.filter(n => group.includes(n)).length >= 2) {
-      count_3p1++;
-    }
-  }
-
-  // 2台並び×2
-  for (let i = 0; i < all.length - 1; i++) {
-    for (let j = i+2; j < all.length - 1; j++) {
-      const group = [all[i], all[i+1], all[j], all[j+1]];
-      if (active.every(n => group.includes(n))) {
-        count_2x2++;
-      }
-    }
-  }
-
-  // 末尾3+1
-  const tails = {};
-  all.forEach(n=>{
-    const t = n % 10;
-    if (!tails[t]) tails[t] = [];
-    tails[t].push(n);
-  });
-
-  Object.values(tails).forEach(group=>{
-    if (group.length >= 3) {
-      if (active.every(n => group.includes(n) || true)) {
-        count_tail++;
-      }
-    }
-  });
-
-  // 角
-  const corners = [
-    [665,676,677,688],
-    [666,675,678,687],
-    [667,674,679,686],
-    [668,673,680,685],
-    [669,672,681,684],
-    [670,671,682,683]
-  ];
-
-  corners.forEach(group=>{
-    if (active.every(n => group.includes(n))) {
-      count_corner++;
-    }
-  });
-
-  updateResult(
-    `4並び:${count_4} / 3+1:${count_3p1} / 2x2:${count_2x2} / 末尾:${count_tail} / 角:${count_corner}`
-  );
-}
-
-function updateResult(text){
-  document.getElementById("recommendList").innerText = text;
 }
 </script>
 
