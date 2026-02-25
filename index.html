@@ -75,19 +75,18 @@ Day:
 <div class="panel">
 🎯 並び候補 赤枠表示中
 </div>
-
 <script>
 const upper = [665,666,667,668,669,670,671,672,673,674,675,676];
 const lower = [688,687,686,685,684,683,682,681,680,679,678,677];
 
 const board = document.getElementById("board");
+const panel = document.querySelector(".panel");
 
 // ===== 盤面生成 =====
 [...upper, ...lower].forEach(num => {
   const div = document.createElement("div");
   div.className = "cell";
   div.textContent = num;
-
   div.dataset.lastTap = 0;
 
   div.onclick = () => {
@@ -104,14 +103,13 @@ const board = document.getElementById("board");
     }
 
     div.dataset.lastTap = currentTime;
-
     evaluateBoard();
   };
 
   board.appendChild(div);
 });
 
-// ===== ユーティリティ =====
+// ===== 共通 =====
 function getActiveCells(){
   return Array.from(document.querySelectorAll(".cell.active"));
 }
@@ -137,8 +135,6 @@ function clearRecommend(){
 }
 
 function recommendHorizontalAround(pairNums){
-  clearRecommend();
-
   pairNums.forEach(num=>{
     const left = num - 1;
     const right = num + 1;
@@ -157,17 +153,25 @@ function evaluateBoard(){
   const actives = getActiveCells();
   clearRecommend();
 
-  if (actives.length !== 3) return;
+  if (actives.length !== 3){
+    panel.innerHTML = "🎯 並び候補待機中";
+    return;
+  }
 
   for (let i=0;i<actives.length;i++){
     for (let j=i+1;j<actives.length;j++){
       if (isHorizontalPair(actives[i], actives[j])){
+
         const pairNums = [getNum(actives[i]), getNum(actives[j])];
         recommendHorizontalAround(pairNums);
+
+        panel.innerHTML = "🟢 2×2濃厚モード";
         return;
       }
     }
   }
+
+  panel.innerHTML = "🟡 3＋1濃厚モード";
 }
 
 // ===== リセット =====
@@ -176,8 +180,8 @@ function resetBoard(){
     c.classList.remove("active","used","recommend");
     c.dataset.lastTap = 0;
   });
+  panel.innerHTML = "🎯 並び候補待機中";
 }
 </script>
-
 </body>
 </html>
