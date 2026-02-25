@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>かぐやローテツール</title>
+
+<style>
+body {
+  background:#111;
+  color:white;
+  font-family:sans-serif;
+  margin:0;
+  padding:10px;
+  text-align:center;
+}
+
+h1 {
+  font-size:18px;
+  margin-bottom:5px;
+}
+
+.controls {
+  margin-bottom:10px;
+}
+
+button {
+  padding:5px 10px;
+  font-size:14px;
+  border-radius:6px;
+  border:none;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap:6px;
+  margin-bottom:15px;
+}
+
+.cell {
+  background:#1e1e1e;
+  border:2px solid #444;
+  border-radius:8px;
+  padding:12px 0;
+  font-weight:bold;
+  font-size:14px;
+}
+
+.cell.active {
+  background:#f7c948;
+  color:black;
+}
+
+.cell.used {
+  background:#555;
+}
+
+.cell.recommend {
+  border:3px solid #ff4d4f;
+}
+
+.panel {
+  background:#222;
+  padding:10px;
+  border-radius:8px;
+  margin-bottom:10px;
+}
+
+.star {
+  color:#f7c948;
+}
+</style>
+</head>
+
+<body>
+
+<h1>かぐや 665–688</h1>
+
+<div class="controls">
+  Day:
+  <select id="day">
+    <option>1</option>
+    <option>2</option>
+    <option>3</option>
+    <option>4</option>
+    <option>5</option>
+    <option>6</option>
+    <option>7</option>
+  </select>
+  <button onclick="resetBoard()">開催リセット</button>
+</div>
+
+<div class="grid" id="board"></div>
+
+<div class="panel">
+  🎯 第一候補：<span id="mainTarget">---</span><br><br>
+  並び：<span id="nScore"></span><br>
+  末尾：<span id="mScore"></span><br>
+  角　：<span id="kScore"></span>
+</div>
+
+<div class="panel">
+  ▶ 推奨確認順<br>
+  <div id="recommendList">---</div>
+</div>
+
+<script>
+const upper = [665,666,667,668,669,670,671,672,673,674,675,676];
+const lower = [688,687,686,685,684,683,682,681,680,679,678,677];
+
+const board = document.getElementById("board");
+
+[...upper, ...lower].forEach(num => {
+  const div = document.createElement("div");
+  div.className="cell";
+  div.textContent=num;
+  div.onclick=()=>{
+    div.classList.toggle("active");
+  };
+  div.oncontextmenu=(e)=>{
+    e.preventDefault();
+    div.classList.toggle("used");
+  };
+  board.appendChild(div);
+});
+
+function resetBoard(){
+  document.querySelectorAll(".cell").forEach(c=>{
+    c.classList.remove("active","used","recommend");
+  });
+}
+</script>
+
+</body>
+</html>
