@@ -122,6 +122,7 @@ const board = document.getElementById("board");
 
     div.dataset.lastTap = currentTime;
     checkNarabi();
+    analyzePatterns();
   };
 
   board.appendChild(div);
@@ -163,7 +164,92 @@ function resetBoard(){
     c.dataset.lastTap = 0;
   });
 }
+// ===== パターン分析 =====
 
+function analyzePatterns() {
+
+  const active = [...document.querySelectorAll(".cell.active")]
+                  .map(c => parseInt(c.textContent));
+
+  if (active.length === 0) {
+    updateResult("—");
+    return;
+  }
+
+  const all = [...upper, ...lower];
+
+  let count_4 = 0;
+  let count_3p1 = 0;
+  let count_2x2 = 0;
+  let count_tail = 0;
+  let count_corner = 0;
+
+  // 4台並び
+  for (let i = 0; i < all.length - 3; i++) {
+    const group = [all[i], all[i+1], all[i+2], all[i+3]];
+    if (active.every(n => group.includes(n))) {
+      count_4++;
+    }
+  }
+
+  // 3台並び+1
+  for (let i = 0; i < all.length - 2; i++) {
+    const group = [all[i], all[i+1], all[i+2]];
+    if (active.filter(n => group.includes(n)).length >= 2) {
+      count_3p1++;
+    }
+  }
+
+  // 2台並び×2
+  for (let i = 0; i < all.length - 1; i++) {
+    for (let j = i+2; j < all.length - 1; j++) {
+      const group = [all[i], all[i+1], all[j], all[j+1]];
+      if (active.every(n => group.includes(n))) {
+        count_2x2++;
+      }
+    }
+  }
+
+  // 末尾3+1
+  const tails = {};
+  all.forEach(n=>{
+    const t = n % 10;
+    if (!tails[t]) tails[t] = [];
+    tails[t].push(n);
+  });
+
+  Object.values(tails).forEach(group=>{
+    if (group.length >= 3) {
+      if (active.every(n => group.includes(n) || true)) {
+        count_tail++;
+      }
+    }
+  });
+
+  // 角
+  const corners = [
+    [665,676,677,688],
+    [666,675,678,687],
+    [667,674,679,686],
+    [668,673,680,685],
+    [669,672,681,684],
+    [670,671,682,683]
+  ];
+
+  corners.forEach(group=>{
+    if (active.every(n => group.includes(n))) {
+      count_corner++;
+    }
+  });
+
+  updateResult(
+    `4並び:${count_4} / 3+1:${count_3p1} / 2x2:${count_2x2} / 末尾:${count_tail} / 角:${count_corner}`
+  );
+}
+
+function updateResult(text){
+  document.getElementById("recommendList").innerText = text;
+}
 </script>
 
 </body>
