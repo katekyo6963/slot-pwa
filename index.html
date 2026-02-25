@@ -115,13 +115,23 @@ const board = document.getElementById("board");
   const div = document.createElement("div");
   div.className="cell";
   div.textContent=num;
-  div.onclick=()=>{
-    div.classList.toggle("active");
-  };
-  div.oncontextmenu=(e)=>{
-    e.preventDefault();
+  let lastTap = 0;
+
+div.onclick = ()=>{
+  const currentTime = new Date().getTime();
+  const tapLength = currentTime - lastTap;
+  lastTap = currentTime;
+
+  // ダブルタップ判定
+  if (tapLength < 300 && tapLength > 0) {
+    div.classList.remove("active");
     div.classList.toggle("used");
-  };
+  } else {
+    if (!div.classList.contains("used")) {
+      div.classList.toggle("active");
+    }
+  }
+};
   board.appendChild(div);
 });
 
